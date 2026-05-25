@@ -218,34 +218,27 @@ No existing Meta Developer App exists. The following is required to build the Me
 1. Create a Meta Developer account at developers.facebook.com.
 2. Create a new Meta App (type: Business).
 3. Add the **Messenger** product to the app.
-4. Configure a Webhook to receive `messages` and `messaging_postbacks` events.
+4. Link the app to the **CommunitySwimClub** Facebook Page (secretary grants permission).
+5. Configure a Webhook pointing at the production server to receive `messages` and `messaging_postbacks` events.
+6. Add each developer's Facebook account as an App Tester.
 
-### Phase 2 — Staging / Development
+### Phase 2 — Development & Testing
 
-A dedicated test Facebook Page is used for development and QA so the production CommunitySwimClub page is never touched during development. The Meta App runs in development mode — only App admins and testers can interact with the bot, no App Review required.
+The CommunitySwimClub page is used directly from the start. While the Meta App is in **development mode**, the bot only responds to people explicitly added as App admins/developers/testers — regular member messages receive no bot reply and continue to appear in the page inbox for the secretary to handle as normal. This naturally protects members from seeing in-progress responses.
 
-**Steps:**
-1. Secretary creates a new Facebook Page (e.g., "CSC Agent Test").
-2. Link the test page to the Meta App.
-3. Add each developer's Facebook account as an App Tester.
-4. Point the webhook at the staging server.
+**Notes for the secretary during development:**
+- Member messages will not receive bot replies until the app goes live — this is expected.
+- Tester accounts will receive bot replies; this is how developers verify behavior.
+- For local development, a tunneling tool (e.g., ngrok) is used to temporarily point the webhook at a developer's machine. Only one webhook can be active at a time.
 
-**What is needed:**
-- Secretary creates the test page (~5 minutes).
-- A Facebook account for each developer to add as App Tester.
+### Phase 3 — Go-Live
 
-### Phase 3 — Production Cutover (Go-Live)
+When the bot is ready for all members:
 
-When testing is complete and the agent is ready for real members:
-
-1. **Link the production page** — In the Meta App dashboard, add the CommunitySwimClub Facebook Page (secretary grants permission). The test page can remain linked for continued regression testing.
-2. **Update the webhook URL** — Point the production webhook subscription to the production server endpoint.
-3. **Subscribe the production page** — Generate and save a production Page Access Token scoped to the CommunitySwimClub page.
-4. **Submit for App Review** — Request the `pages_messaging` permission from Meta. This is required before non-testers (i.e., regular members) can receive bot responses. Approval typically takes a few days.
-5. **Verify end-to-end** — Send a test message from a non-tester account on the production page to confirm the live bot responds correctly.
-6. **Announce to members** — Notify members that they can now message the CommunitySwimClub Facebook page to get instant answers.
-
-> The test page and staging server remain active after go-live so future changes can be validated before being promoted to production.
+1. **Submit for App Review** — Request the `pages_messaging` permission from Meta. Required before non-testers can receive bot responses. Approval typically takes a few days; submit early.
+2. **Switch app to live mode** — Once approved, flip the Meta App from development to live. The bot will begin responding to all members automatically.
+3. **Verify end-to-end** — Send a test message from a non-tester account to confirm live behavior.
+4. **Announce to members** — Notify members that they can now message the CommunitySwimClub Facebook page to get instant answers.
 
 ---
 

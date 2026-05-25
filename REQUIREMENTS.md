@@ -29,6 +29,28 @@ The agent's core knowledge and logic should be channel-agnostic so the same impl
 
 ---
 
+## Content Sources
+
+| Source | Purpose |
+|---|---|
+| communityswimclub.com | Primary source of truth for all club information |
+| facebook.com/communityswimclub | Secondary source for events, announcements, and social content |
+
+Content will be crawled and indexed from both sources. When the website and Facebook page conflict, the website is authoritative. The knowledge base should be re-indexed on a scheduled basis (e.g., nightly) to pick up changes without manual intervention.
+
+---
+
+## Escalation Contact
+
+When the agent cannot answer a question, it directs members to:
+
+- **Email:** secretary@communityswimclub.com
+- **Facebook Page:** facebook.com/communityswimclub
+
+The secretary is also the administrator of the CommunitySwimClub Facebook Page and is the primary human escalation point for both channels.
+
+---
+
 ## Knowledge Domains
 
 The agent must be able to answer questions across the following topics:
@@ -130,6 +152,74 @@ Track and expose the following metrics:
 
 ---
 
+## Analytics & Observability Tooling
+
+No existing analytics tooling is in place. The following stack is recommended to meet analytics and eval requirements while keeping costs minimal:
+
+### Recommended: Langfuse (LLM Observability — Free Tier)
+
+[Langfuse](https://langfuse.com) is purpose-built for LLM applications. It covers:
+- **Tracing** — every conversation, LLM call, retrieval step, and latency is recorded automatically.
+- **Cost tracking** — token usage and estimated spend per model per day.
+- **Evals** — built-in support for LLM-as-judge scoring on live traces (online evals) and dataset-based offline evals.
+- **Dashboard** — built-in charts for volume, latency, quality scores, and error rates.
+- **Free cloud tier** — generous enough for a small club's traffic; self-host on a small VM if needed to eliminate the cloud cost entirely.
+
+Langfuse satisfies AR-1, AR-2, EV-2, and EV-3 with no additional tooling.
+
+### Recommended: Google Looker Studio (Admin Dashboard — Free)
+
+[Looker Studio](https://lookerstudio.google.com) (formerly Data Studio) connects to Langfuse exports or a lightweight Postgres/SQLite log table and provides a shareable, browser-based dashboard that administrators can view without any engineering access. This satisfies the AR-2 requirement for a non-technical admin view.
+
+### Alternative Considered: PostHog
+
+PostHog (free tier: 1M events/month) is a strong alternative for product analytics but lacks the LLM-specific tracing that Langfuse provides. It could be added later for session-level funnel analysis if needed.
+
+### Decision Summary
+
+| Requirement | Tool | Cost |
+|---|---|---|
+| LLM traces, costs, latency | Langfuse cloud (free tier) | $0 |
+| Online evals (LLM-as-judge) | Langfuse evals | $0 + LLM token cost |
+| Offline eval dataset & CI | Langfuse datasets + GitHub Actions | $0 |
+| Admin-facing dashboard | Google Looker Studio | $0 |
+
+---
+
+## Meta Developer App Setup
+
+No existing Meta Developer App exists. The following is required to build the Messenger integration:
+
+### Production Setup
+1. Create a Meta Developer account at developers.facebook.com.
+2. Create a new Meta App (type: Business).
+3. Add the **Messenger** product to the app.
+4. Link the app to the **CommunitySwimClub** Facebook Page (secretary@communityswimclub.com is the Page admin and can grant the required permissions).
+5. Configure a Webhook to receive `messages` and `messaging_postbacks` events.
+6. Submit for Meta App Review to obtain `pages_messaging` permission for production use.
+
+### Staging / Development Setup
+
+For development and QA, Meta's development mode allows testing without App Review — only admins, developers, and testers added to the Meta App can interact with the bot. Two options:
+
+**Option A — Use the production page in dev mode (simplest)**
+- Add developers as Testers on the Meta App.
+- The bot only responds to those testers until the app is approved.
+- No second page needed.
+
+**Option B — Create a dedicated test Facebook Page**
+- Create a new Facebook Page (e.g., "CSC Agent Test") — this is free and takes ~5 minutes.
+- Link it to the Meta App for development.
+- The production CommunitySwimClub page is never touched during development.
+- Recommended if multiple developers will be testing simultaneously.
+
+**What is needed to proceed:**
+- Admin access to the CommunitySwimClub Facebook Page (secretary has this).
+- Decision on Option A vs. Option B above.
+- A Facebook account for each developer to add as App Tester.
+
+---
+
 ## Out of Scope (v1)
 
 - Booking or transactional workflows (the agent answers questions but does not process registrations, payments, or reservations directly).
@@ -141,8 +231,7 @@ Track and expose the following metrics:
 
 ## Open Questions
 
-1. Where is the authoritative source of truth for pool hours, events, and pricing — the website, a Google Sheet, or another system? This affects the knowledge-base update workflow.
-2. Does the club want the agent to hand off to a specific staff email/phone, or is a generic "contact us" message sufficient for escalations?
-3. Are there any existing Facebook Page credentials or a Meta Developer App already set up?
-4. What analytics tooling does the club already use (Google Analytics, a BI tool, spreadsheets)?
-5. Is there a staging/test Facebook Page that can be used for development and QA?
+1. **Staging page approach** — Option A (use the production page with dev-mode testers) or Option B (create a dedicated test page)? Option B is recommended.
+2. **Re-index schedule** — Is nightly sufficient, or are there time-sensitive announcements (e.g., same-day pool closures) that require a faster refresh?
+3. **Tone / persona** — Should the agent have a name and persona (e.g., "Splash, the CSC Assistant"), or respond neutrally as "CSC"?
+4. **Board member privacy** — Should board members' personal contact info (phone/email) be surfaced by the agent, or should all contacts route through the secretary?

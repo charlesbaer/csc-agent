@@ -214,28 +214,38 @@ PostHog (free tier: 1M events/month) is a strong alternative for product analyti
 
 No existing Meta Developer App exists. The following is required to build the Messenger integration:
 
-### Production Setup
+### Phase 1 — Initial Setup (One-time)
 1. Create a Meta Developer account at developers.facebook.com.
 2. Create a new Meta App (type: Business).
 3. Add the **Messenger** product to the app.
-4. Link the app to the **CommunitySwimClub** Facebook Page (secretary@communityswimclub.com is the Page admin and can grant the required permissions).
-5. Configure a Webhook to receive `messages` and `messaging_postbacks` events.
-6. Submit for Meta App Review to obtain `pages_messaging` permission for production use.
+4. Configure a Webhook to receive `messages` and `messaging_postbacks` events.
 
-### Staging / Development Setup
+### Phase 2 — Staging / Development
 
-A dedicated test Facebook Page will be created for development and QA (separate from the production CommunitySwimClub page). The Meta App will run in development mode, limiting bot interactions to App admins and testers only — no App Review required for this stage.
+A dedicated test Facebook Page is used for development and QA so the production CommunitySwimClub page is never touched during development. The Meta App runs in development mode — only App admins and testers can interact with the bot, no App Review required.
 
-**Steps to set up staging:**
-1. Create a new Facebook Page (e.g., "CSC Agent Test") linked to the secretary's account.
-2. Link the test page to the Meta App as a development target.
+**Steps:**
+1. Secretary creates a new Facebook Page (e.g., "CSC Agent Test").
+2. Link the test page to the Meta App.
 3. Add each developer's Facebook account as an App Tester.
-4. Point the development webhook at the local/staging server.
+4. Point the webhook at the staging server.
 
-**What is needed to proceed:**
-- Secretary creates the test Facebook Page (~5 minutes).
-- Secretary grants the Meta App permission on both the test and production pages.
-- A Facebook account for each developer to be added as App Tester.
+**What is needed:**
+- Secretary creates the test page (~5 minutes).
+- A Facebook account for each developer to add as App Tester.
+
+### Phase 3 — Production Cutover (Go-Live)
+
+When testing is complete and the agent is ready for real members:
+
+1. **Link the production page** — In the Meta App dashboard, add the CommunitySwimClub Facebook Page (secretary grants permission). The test page can remain linked for continued regression testing.
+2. **Update the webhook URL** — Point the production webhook subscription to the production server endpoint.
+3. **Subscribe the production page** — Generate and save a production Page Access Token scoped to the CommunitySwimClub page.
+4. **Submit for App Review** — Request the `pages_messaging` permission from Meta. This is required before non-testers (i.e., regular members) can receive bot responses. Approval typically takes a few days.
+5. **Verify end-to-end** — Send a test message from a non-tester account on the production page to confirm the live bot responds correctly.
+6. **Announce to members** — Notify members that they can now message the CommunitySwimClub Facebook page to get instant answers.
+
+> The test page and staging server remain active after go-live so future changes can be validated before being promoted to production.
 
 ---
 

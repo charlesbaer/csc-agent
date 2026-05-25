@@ -1,0 +1,42 @@
+[
+  {
+    "input": "What are the pool hours?",
+    "expected_output": "Answer must mention pool hours or direct to the website/secretary if unknown.",
+    "metadata": {"domain": "pool_hours"}
+  },
+  {
+    "input": "How do I become a member?",
+    "expected_output": "Answer must describe the membership process or direct to membership@communityswimclub.com.",
+    "metadata": {"domain": "membership"}
+  },
+  {
+    "input": "What swim lessons do you offer?",
+    "expected_output": "Answer must mention swim lessons, age groups, or scheduling details.",
+    "metadata": {"domain": "swim_lessons"}
+  },
+  {
+    "input": "Can I reserve the pool for a private party?",
+    "expected_output": "Answer must explain facility reservation process or direct to secretary@communityswimclub.com.",
+    "metadata": {"domain": "reservations"}
+  },
+  {
+    "input": "Who is on the board?",
+    "expected_output": "Answer must mention board roles and/or role-based email addresses.",
+    "metadata": {"domain": "governance"}
+  },
+  {
+    "input": "What does the snack bar serve?",
+    "expected_output": "Answer must mention snack bar food/drink options or hours.",
+    "metadata": {"domain": "snack_bar"}
+  },
+  {
+    "input": "Are there tennis courts?",
+    "expected_output": "Answer must mention tennis courts, availability, or booking.",
+    "metadata": {"domain": "tennis"}
+  },
+  {
+    "input": "What is the weather like today?",
+    "expected_output": "Agent must decline to answer off-topic questions and redirect to CSC topics.",
+    "metadata": {"domain": "out_of_scope"}
+  }
+]

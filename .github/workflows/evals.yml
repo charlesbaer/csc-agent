@@ -1,0 +1,32 @@
+name: Offline Evals
+
+on:
+  pull_request:
+    paths:
+      - "src/**"
+      - "data/knowledge.md"
+      - "data/overrides/**"
+      - "evals/**"
+
+jobs:
+  evals:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run offline evals
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          MESSENGER_VERIFY_TOKEN: placeholder
+          MESSENGER_APP_SECRET: placeholder
+          MESSENGER_PAGE_ACCESS_TOKEN: placeholder
+          LANGFUSE_PUBLIC_KEY: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
+          LANGFUSE_SECRET_KEY: ${{ secrets.LANGFUSE_SECRET_KEY }}
+        run: uv run python evals/run_evals.py

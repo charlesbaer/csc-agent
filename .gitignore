@@ -1,0 +1,19 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+dist/
+build/
+
+# uv
+.python-version
+
+# Database (lives on Fly.io persistent volume)
+data/message_log.db
+
+# OS
+.DS_Store

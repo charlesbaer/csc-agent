@@ -36,7 +36,31 @@ The agent's core knowledge and logic should be channel-agnostic so the same impl
 | communityswimclub.com | Primary source of truth for all club information |
 | facebook.com/communityswimclub | Secondary source for events, announcements, and social content |
 
-Content will be crawled and indexed from both sources. When the website and Facebook page conflict, the website is authoritative. The knowledge base should be re-indexed on a scheduled basis (e.g., nightly) to pick up changes without manual intervention.
+Content will be crawled and indexed from both sources. When the website and Facebook page conflict, the website is authoritative. The knowledge base is re-indexed nightly to pick up changes without manual intervention.
+
+---
+
+## Agent Identity & Tone
+
+The agent identifies itself as **CSC** (no custom persona or mascot name). Responses should be:
+- Friendly, welcoming, and concise.
+- Written in the first-person plural ("We open at 9am", "Our snack bar serves…").
+- Free of jargon; accessible to members of all ages.
+
+---
+
+## Board Contact Addresses
+
+The following role-based email addresses are public and may be shared by the agent with members:
+
+| Role | Address |
+|---|---|
+| President | president@communityswimclub.com |
+| Treasurer | treasurer@communityswimclub.com |
+| Membership | membership@communityswimclub.com |
+| Secretary | secretary@communityswimclub.com |
+
+The agent should route members to the most relevant role address when possible (e.g., membership questions → membership@, payment questions → treasurer@), and fall back to secretary@ for anything else.
 
 ---
 
@@ -200,23 +224,18 @@ No existing Meta Developer App exists. The following is required to build the Me
 
 ### Staging / Development Setup
 
-For development and QA, Meta's development mode allows testing without App Review — only admins, developers, and testers added to the Meta App can interact with the bot. Two options:
+A dedicated test Facebook Page will be created for development and QA (separate from the production CommunitySwimClub page). The Meta App will run in development mode, limiting bot interactions to App admins and testers only — no App Review required for this stage.
 
-**Option A — Use the production page in dev mode (simplest)**
-- Add developers as Testers on the Meta App.
-- The bot only responds to those testers until the app is approved.
-- No second page needed.
-
-**Option B — Create a dedicated test Facebook Page**
-- Create a new Facebook Page (e.g., "CSC Agent Test") — this is free and takes ~5 minutes.
-- Link it to the Meta App for development.
-- The production CommunitySwimClub page is never touched during development.
-- Recommended if multiple developers will be testing simultaneously.
+**Steps to set up staging:**
+1. Create a new Facebook Page (e.g., "CSC Agent Test") linked to the secretary's account.
+2. Link the test page to the Meta App as a development target.
+3. Add each developer's Facebook account as an App Tester.
+4. Point the development webhook at the local/staging server.
 
 **What is needed to proceed:**
-- Admin access to the CommunitySwimClub Facebook Page (secretary has this).
-- Decision on Option A vs. Option B above.
-- A Facebook account for each developer to add as App Tester.
+- Secretary creates the test Facebook Page (~5 minutes).
+- Secretary grants the Meta App permission on both the test and production pages.
+- A Facebook account for each developer to be added as App Tester.
 
 ---
 
@@ -227,11 +246,3 @@ For development and QA, Meta's development mode allows testing without App Revie
 - Support for languages other than English.
 - Mobile app integration.
 
----
-
-## Open Questions
-
-1. **Staging page approach** — Option A (use the production page with dev-mode testers) or Option B (create a dedicated test page)? Option B is recommended.
-2. **Re-index schedule** — Is nightly sufficient, or are there time-sensitive announcements (e.g., same-day pool closures) that require a faster refresh?
-3. **Tone / persona** — Should the agent have a name and persona (e.g., "Splash, the CSC Assistant"), or respond neutrally as "CSC"?
-4. **Board member privacy** — Should board members' personal contact info (phone/email) be surfaced by the agent, or should all contacts route through the secretary?

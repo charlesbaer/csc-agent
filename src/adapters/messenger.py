@@ -37,9 +37,20 @@ def _send_message(recipient_psid: str, text: str) -> None:
         resp = http_requests.post(
             _GRAPH_URL,
             params={"access_token": cfg.messenger_page_access_token},
-            json={"recipient": {"id": recipient_psid}, "message": {"text": text}},
+            json={
+                "recipient": {"id": recipient_psid},
+                "message": {"text": text},
+                "messaging_type": "RESPONSE",
+            },
             timeout=10,
         )
+        if not resp.ok:
+            logger.error(
+                "Failed to send Messenger message to %s: %s %s",
+                recipient_psid,
+                resp.status_code,
+                resp.text,
+            )
         resp.raise_for_status()
     except Exception as exc:
         logger.error("Failed to send Messenger message to %s: %s", recipient_psid, exc)

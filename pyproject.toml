@@ -10,7 +10,7 @@ dependencies = [
     "html2text>=2024.2.26",
     "apscheduler>=3.10.0",
     "sqlalchemy>=2.0.0",
-    "langfuse>=2.57.0",
+    "langfuse>=2.57.0,<3.0.0",
     "python-dotenv>=1.0.0",
     "gunicorn>=23.0.0",
 ]

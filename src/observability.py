@@ -44,19 +44,14 @@ def trace_response(
         return
 
     try:
-        trace = client.trace(
+        span = client.start_observation(
             name="csc-agent-response",
-            tags=[channel],
-            metadata={"channel": channel, "escalated": escalated, "latency_ms": latency_ms},
             input=message,
             output=response,
+            metadata={"channel": channel, "escalated": escalated, "latency_ms": latency_ms},
         )
         if escalated:
-            client.score(
-                trace_id=trace.id,
-                name="escalated",
-                value=1,
-            )
+            span.score_trace(name="escalated", value=1)
         client.flush()
     except Exception as exc:
         logger.warning("Langfuse trace failed: %s", exc)

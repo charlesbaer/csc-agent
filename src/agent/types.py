@@ -22,3 +22,6 @@ class Response:
     text: str
     escalated: bool = False
     channel: Channel = Channel.MESSENGER
+    model: str = ""
+    input_tokens: int = 0
+    output_tokens: int = 0

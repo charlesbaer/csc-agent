@@ -62,6 +62,10 @@ def _handle_message_async(sender_psid: str, message_text: str) -> None:
     start = time.monotonic()
     msg = Message(text=message_text, channel=Channel.MESSENGER, sender_id=sender_psid)
 
+    model = ""
+    input_tokens = 0
+    output_tokens = 0
+
     try:
         response = agent_module.respond(msg)
     except Exception as exc:
@@ -74,11 +78,13 @@ def _handle_message_async(sender_psid: str, message_text: str) -> None:
     else:
         response_text = response.text
         escalated = response.escalated
+        model = response.model
+        input_tokens = response.input_tokens
+        output_tokens = response.output_tokens
 
     latency_ms = int((time.monotonic() - start) * 1000)
     _send_message(sender_psid, response_text)
 
-    # Log to DB (hash the PSID — no raw PII)
     sender_hash = hashlib.sha256(sender_psid.encode()).hexdigest()
     with get_session() as session:
         session.add(
@@ -99,6 +105,11 @@ def _handle_message_async(sender_psid: str, message_text: str) -> None:
         response=response_text,
         latency_ms=latency_ms,
         escalated=escalated,
+        model=model,
+        input_tokens=input_tokens,
+        output_tokens=output_tokens,
+        user_id=sender_hash,
+        session_id=sender_hash,
     )
 
 

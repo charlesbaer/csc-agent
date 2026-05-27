@@ -37,23 +37,41 @@ def trace_response(
     response: str,
     latency_ms: int,
     escalated: bool,
+    model: str = "",
+    input_tokens: int = 0,
+    output_tokens: int = 0,
+    user_id: str = "",
+    session_id: str = "",
 ) -> None:
-    """Fire-and-forget: log a completed conversation turn to Langfuse."""
     client = _get_client()
     if not client:
         return
 
     try:
-        span = client.start_observation(
-            name="csc-agent-response",
-            input=message,
-            output=response,
-            metadata={"channel": channel, "escalated": escalated, "latency_ms": latency_ms},
-        )
-        if escalated:
-            span.score_trace(name="escalated", value=1)
-        span.end()
+        from langfuse import propagate_attributes
+
+        with propagate_attributes(
+            user_id=user_id or None,
+            session_id=session_id or None,
+            tags=[channel],
+            trace_name="csc-agent-response",
+        ):
+            span = client.start_observation(
+                name="csc-agent-response",
+                as_type="generation",
+                input=message,
+                output=response,
+                model=model or None,
+                usage_details=(
+                    {"input": input_tokens, "output": output_tokens}
+                    if input_tokens or output_tokens
+                    else None
+                ),
+                metadata={"channel": channel, "escalated": escalated, "latency_ms": latency_ms},
+            )
+            if escalated:
+                span.score_trace(name="escalated", value=1)
+            span.end()
         client.flush()
     except Exception as exc:
         logger.warning("Langfuse trace failed: %s", exc)
-

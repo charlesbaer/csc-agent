@@ -73,4 +73,11 @@ def respond(message: Message) -> Response:
         escalated,
     )
 
-    return Response(text=response_text, escalated=escalated, channel=message.channel)
+    return Response(
+        text=response_text,
+        escalated=escalated,
+        channel=message.channel,
+        model=cfg.anthropic_model,
+        input_tokens=result.usage.input_tokens,
+        output_tokens=result.usage.output_tokens,
+    )

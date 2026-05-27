@@ -98,13 +98,17 @@ def _md_cell(text: str) -> str:
 def _write_markdown(rows: list[dict], avg: float) -> None:
     failures = sum(1 for r in rows if r["status"] == "FAIL")
     overall = "PASSED" if avg >= PASS_THRESHOLD else "FAILED"
+    summary = (
+        f"**Overall: {overall}** — average score {avg:.2f}"
+        f" ({failures} failures / {len(rows)} total, threshold {PASS_THRESHOLD})"
+    )
     lines = [
-        f"# Eval Results",
-        f"",
-        f"**Overall: {overall}** — average score {avg:.2f} ({failures} failures / {len(rows)} total, threshold {PASS_THRESHOLD})",
-        f"",
-        f"| Status | Score | Prompt | Response | Judge |",
-        f"|--------|-------|--------|----------|-------|",
+        "# Eval Results",
+        "",
+        summary,
+        "",
+        "| Status | Score | Prompt | Response | Judge |",
+        "|--------|-------|--------|----------|-------|",
     ]
     for row in rows:
         cols = [row["status"], row["score"], row["prompt"], row["response"], row["judge"]]

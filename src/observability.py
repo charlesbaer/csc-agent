@@ -52,6 +52,7 @@ def trace_response(
         )
         if escalated:
             span.score_trace(name="escalated", value=1)
+        span.end()
         client.flush()
     except Exception as exc:
         logger.warning("Langfuse trace failed: %s", exc)

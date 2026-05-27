@@ -54,7 +54,9 @@ def respond(message: Message) -> Response:
         messages=[
             {
                 "role": "user",
-                "content": f"[Today is {date.today().strftime('%A, %B %-d, %Y')}]\n\n{message.text}",
+                "content": (
+                    f"[Today is {date.today().strftime('%A, %B %-d, %Y')}]\n\n{message.text}"
+                ),
             }
         ],
     )

@@ -17,13 +17,14 @@ def _get_client():
         return None
 
     try:
+        import os
+
         from langfuse import Langfuse
 
-        _langfuse = Langfuse(
-            public_key=cfg.langfuse_public_key,
-            secret_key=cfg.langfuse_secret_key,
-            host=cfg.langfuse_host,
-        )
+        os.environ.setdefault("LANGFUSE_PUBLIC_KEY", cfg.langfuse_public_key)
+        os.environ.setdefault("LANGFUSE_SECRET_KEY", cfg.langfuse_secret_key)
+        os.environ.setdefault("LANGFUSE_HOST", cfg.langfuse_host)
+        _langfuse = Langfuse()
     except Exception as exc:
         logger.warning("Langfuse init failed: %s", exc)
 

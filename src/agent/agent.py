@@ -1,4 +1,5 @@
 import logging
+from datetime import date
 from pathlib import Path
 
 import anthropic
@@ -50,7 +51,12 @@ def respond(message: Message) -> Response:
                 "cache_control": {"type": "ephemeral"},
             },
         ],
-        messages=[{"role": "user", "content": message.text}],
+        messages=[
+            {
+                "role": "user",
+                "content": f"[Today is {date.today().strftime('%A, %B %-d, %Y')}]\n\n{message.text}",
+            }
+        ],
     )
 
     response_text = result.content[0].text

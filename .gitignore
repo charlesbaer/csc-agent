@@ -12,8 +12,13 @@ build/
 # uv
 .python-version
 
-# Database (lives on Fly.io persistent volume)
+# Runtime data (lives on Fly.io persistent volume)
 data/message_log.db
+data/knowledge.md
+data/knowledge_meta.json
+
+# Generated eval output
+evals/eval_results.md
 
 # OS
 .DS_Store

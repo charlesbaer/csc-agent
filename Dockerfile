@@ -10,6 +10,7 @@ RUN uv sync --no-dev --frozen
 
 COPY src/ ./src/
 COPY scripts/ ./scripts/
+COPY overrides/ ./overrides/
 
 EXPOSE 8080
 

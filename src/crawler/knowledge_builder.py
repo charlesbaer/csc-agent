@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 DATA_DIR = Path(__file__).parent.parent.parent / "data"
 KNOWLEDGE_FILE = DATA_DIR / "knowledge.md"
 META_FILE = DATA_DIR / "knowledge_meta.json"
-OVERRIDES_DIR = DATA_DIR / "overrides"
+OVERRIDES_DIR = Path(__file__).parent.parent.parent / "overrides"
 
 
 def build_knowledge_base(facebook_page_id: str = "", facebook_token: str = "") -> str:

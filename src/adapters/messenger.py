@@ -134,6 +134,15 @@ def receive():
 
     for entry in payload.get("entry", []):
         for event in entry.get("messaging", []):
+            if "messaging_policy_enforcement" in event:
+                enforcement = event["messaging_policy_enforcement"]
+                logger.warning(
+                    "Meta policy enforcement event: action=%s reason=%s",
+                    enforcement.get("action"),
+                    enforcement.get("reason"),
+                )
+                continue
+
             mid = event.get("message", {}).get("mid")
             sender_psid = event.get("sender", {}).get("id", "")
             message_text = event.get("message", {}).get("text")

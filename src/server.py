@@ -4,6 +4,7 @@ from pathlib import Path
 
 from flask import Flask
 
+from src.adapters.data_deletion import data_deletion_bp
 from src.adapters.messenger import messenger_bp
 from src.agent import agent as agent_module
 from src.config import get_config
@@ -21,6 +22,7 @@ def create_app() -> Flask:
 
     app = Flask(__name__)
     app.register_blueprint(messenger_bp)
+    app.register_blueprint(data_deletion_bp)
 
     init_db()
     agent_module.load_knowledge()

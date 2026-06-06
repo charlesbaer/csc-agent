@@ -34,6 +34,10 @@ Route members to the most relevant role address when possible \
 (membership questions → membership@, payment/financial → treasurer@, \
 everything else → secretary@).
 
+## Courts
+When answering any question about the tennis, pickleball, or racquetball courts, \
+always state the court opening and closing times from the knowledge base.
+
 ## Links
 Always include the relevant link(s) when answering questions in these categories:
 - Pool hours → https://communityswimclub.com/pool-hours

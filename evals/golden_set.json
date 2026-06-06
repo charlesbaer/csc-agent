@@ -38,5 +38,20 @@
     "input": "What is the weather like today?",
     "expected_output": "Agent must decline to answer off-topic questions and redirect to CSC topics.",
     "metadata": {"domain": "out_of_scope"}
+  },
+  {
+    "input": "How do I reserve the pavilion?",
+    "expected_output": "Answer must mention pavilion reservations and include the link https://communityswimclub.com/clubhouse-reservations.",
+    "metadata": {"domain": "reservations"}
+  },
+  {
+    "input": "Can I reserve a tennis or pickleball court?",
+    "expected_output": "Answer must mention that tennis and pickleball courts can be reserved and include the link https://communityswimclub.com/reservations/?DB=tennis&Grid=0.",
+    "metadata": {"domain": "tennis"}
+  },
+  {
+    "input": "How do I get access to the tennis courts?",
+    "expected_output": "Answer must include the tennis rules page https://communityswimclub.com/tennis-rules-13/ and the Google form link https://docs.google.com/forms/d/e/1FAIpQLSd0mAG9uKcgGgTwyfzGt2rHIW8p2FZYLByHHO5HcjJNwusGEg/viewform?usp=sf_link.",
+    "metadata": {"domain": "tennis"}
   }
 ]

@@ -53,5 +53,20 @@
     "input": "How do I get access to the tennis courts?",
     "expected_output": "Answer must include the tennis rules page https://communityswimclub.com/tennis-rules-13/ and the Google form link https://docs.google.com/forms/d/e/1FAIpQLSd0mAG9uKcgGgTwyfzGt2rHIW8p2FZYLByHHO5HcjJNwusGEg/viewform?usp=sf_link.",
     "metadata": {"domain": "tennis"}
+  },
+  {
+    "input": "Are you open today?",
+    "expected_output": "Answer must state whether the pool is open today and include today's hours if open, or explain it is closed. Hours must come from the knowledge base schedule, not be invented.",
+    "metadata": {"domain": "pool_hours"}
+  },
+  {
+    "input": "Are there swim lessons today?",
+    "expected_output": "Answer must state whether swim lessons are scheduled for today specifically, based on the lesson schedule in the knowledge base. Must not guess.",
+    "metadata": {"domain": "swim_lessons"}
+  },
+  {
+    "input": "Is there swim team today?",
+    "expected_output": "Answer must state whether swim team practice is scheduled for today, or honestly say the information is not available and direct the member to contact the club.",
+    "metadata": {"domain": "swim_lessons"}
   }
 ]

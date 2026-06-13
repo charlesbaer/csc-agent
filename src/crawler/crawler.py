@@ -33,17 +33,15 @@ def crawl_website() -> str:
             logger.warning("Failed to fetch %s: %s", url, exc)
             continue
 
+        content_type = resp.headers.get("Content-Type", "")
+        if "html" not in content_type:
+            logger.info("Skipping non-HTML page %s (%s)", url, content_type)
+            continue
+
         soup = BeautifulSoup(resp.text, "html.parser")
 
-        # Remove nav, footer, scripts — keep main content
-        for tag in soup.select("script, style, nav, footer, header"):
-            tag.decompose()
-
-        markdown = _CONVERTER.handle(str(soup))
-        if markdown.strip():
-            pages.append(f"<!-- Source: {url} -->\n\n{markdown.strip()}")
-
-        # Follow internal links
+        # Follow internal links first — including nav/header/footer, which is
+        # often the only place new pages are linked from (e.g. menu items)
         for a in soup.find_all("a", href=True):
             href = urljoin(url, a["href"])
             parsed = urlparse(href)
@@ -55,6 +53,14 @@ def crawl_website() -> str:
                 clean = parsed._replace(fragment="", query="").geturl()
                 if clean not in visited and clean.startswith(_SITE_ROOT):
                     to_visit.append(clean)
+
+        # Remove nav, footer, scripts — keep main content
+        for tag in soup.select("script, style, nav, footer, header"):
+            tag.decompose()
+
+        markdown = _CONVERTER.handle(str(soup))
+        if markdown.strip():
+            pages.append(f"<!-- Source: {url} -->\n\n{markdown.strip()}")
 
     logger.info("Crawled %d pages from %s", len(pages), _SITE_ROOT)
     return "\n\n---\n\n".join(pages)

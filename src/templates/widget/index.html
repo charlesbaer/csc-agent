@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CSC Chat Assistant</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='widget/style.css') }}">
+</head>
+<body>
+  <div class="chat">
+    <header class="chat-header">
+      <div class="chat-title">CSC Assistant</div>
+      <div class="chat-subtitle">Ask about pool hours, membership, events &amp; more</div>
+    </header>
+
+    <div class="chat-messages" id="messages" role="log" aria-live="polite"></div>
+
+    <form class="chat-input" id="chat-form" autocomplete="off">
+      <input type="text" id="chat-input" placeholder="Type your question…" maxlength="1000" aria-label="Message">
+      <button type="submit" id="chat-send" aria-label="Send">Send</button>
+    </form>
+
+    <footer class="chat-footer">
+      Automated assistant — for account help, email
+      <a href="mailto:secretary@communityswimclub.com">secretary@communityswimclub.com</a>.
+      <a href="{{ privacy_policy_url }}" target="_blank" rel="noopener">Privacy Policy</a>
+    </footer>
+  </div>
+  <script src="{{ url_for('static', filename='widget/chat.js') }}"></script>
+</body>
+</html>

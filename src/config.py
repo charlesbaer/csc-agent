@@ -29,6 +29,12 @@ class Config:
     crawl_schedule_hour: int
     crawl_schedule_minute: int
 
+    # Website chat widget
+    widget_rate_limit_per_minute: int
+    widget_rate_limit_per_day: int
+    widget_frame_ancestors: str
+    privacy_policy_url: str
+
     # App
     log_level: str
 
@@ -60,5 +66,12 @@ def get_config() -> Config:
         langfuse_host=os.getenv("LANGFUSE_HOST", "https://cloud.langfuse.com"),
         crawl_schedule_hour=int(os.getenv("CRAWL_SCHEDULE_HOUR", "2")),
         crawl_schedule_minute=int(os.getenv("CRAWL_SCHEDULE_MINUTE", "0")),
+        widget_rate_limit_per_minute=int(os.getenv("WIDGET_RATE_LIMIT_PER_MINUTE", "10")),
+        widget_rate_limit_per_day=int(os.getenv("WIDGET_RATE_LIMIT_PER_DAY", "150")),
+        widget_frame_ancestors=os.getenv(
+            "WIDGET_FRAME_ANCESTORS",
+            "https://communityswimclub.com https://www.communityswimclub.com",
+        ),
+        privacy_policy_url=os.getenv("PRIVACY_POLICY_URL", "/privacy-policy"),
         log_level=os.getenv("LOG_LEVEL", "INFO"),
     )

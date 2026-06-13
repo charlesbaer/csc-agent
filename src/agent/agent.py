@@ -34,6 +34,18 @@ def respond(message: Message) -> Response:
 
     knowledge = _knowledge_block or "(Knowledge base not loaded.)"
 
+    messages = [
+        {"role": turn["role"], "content": turn["content"]} for turn in message.history
+    ]
+    messages.append(
+        {
+            "role": "user",
+            "content": (
+                f"[Today is {date.today().strftime('%A, %B %-d, %Y')}]\n\n{message.text}"
+            ),
+        }
+    )
+
     result = client.messages.create(
         model=cfg.anthropic_model,
         max_tokens=512,
@@ -51,14 +63,7 @@ def respond(message: Message) -> Response:
                 "cache_control": {"type": "ephemeral"},
             },
         ],
-        messages=[
-            {
-                "role": "user",
-                "content": (
-                    f"[Today is {date.today().strftime('%A, %B %-d, %Y')}]\n\n{message.text}"
-                ),
-            }
-        ],
+        messages=messages,
     )
 
     response_text = result.content[0].text

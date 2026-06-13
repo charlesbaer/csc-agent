@@ -15,6 +15,8 @@ class Message:
     channel: Channel
     sender_id: str = ""
     metadata: dict[str, Any] = field(default_factory=dict)
+    # Prior turns as [{"role": "user"|"assistant", "content": "..."}, ...], oldest first
+    history: list[dict[str, str]] = field(default_factory=list)
 
 
 @dataclass

@@ -48,9 +48,19 @@ The one real risk is staleness: cached prompt blocks have a TTL of ~1 hour, so r
 │  │  (verify)           │    │  │  call_claude() ──────────────────────┼──┼──► Anthropic API
 │  │                     │    │  │  handle_escalation()                 │  │  │  (Claude Haiku)
 │  │  messenger.py       │    │  └──────────────────────────────────────┘  │  │
-│  └─────────────────────┘    └────────────────────────────────────────────┘  │
-│            │                                      │                          │
-│            ▼                                      ▼                          │
+│  └─────────────────────┘    └─────────────▲──────────────────────────────┘  │
+│                                            │                                  │
+│  ┌─────────────────────┐                  │                                  │
+│  │  WIDGET ADAPTER     │                  │                                  │
+│  │  (Website chat)     │                  │                                  │
+│  │                     │                  │                                  │
+│  │  GET  /widget   ──► chat page (iframe) │                                  │
+│  │  POST /chat     ─────────────────────────┘                                │
+│  │  (rate-limited per IP)                                                    │
+│  │  widget.py          │                                                     │
+│  └──────────┬──────────┘                                                     │
+│             │                                                                 │
+│             ▼                                                                 │
 │  ┌──────────────────────────────────────────────────────────────────────┐   │
 │  │  SQLITE  (message_log.db)                                            │   │
 │  │  dedup / idempotency store + conversation log                        │   │
@@ -74,15 +84,13 @@ The one real risk is staleness: cached prompt blocks have a TTL of ~1 hour, so r
   └─────────────────────┘
 
 
-Phase 2 extension points (not built in Phase 1):
-  ┌─────────────────┐    ┌─────────────────┐
-  │  Website Widget │    │  Gmail Adapter  │
-  │  Adapter        │    │  Adapter        │
-  │  POST /chat     │    │  Gmail polling  │
-  └────────┬────────┘    └────────┬────────┘
-           └──────────────┬───────┘
-                          ▼
-                    Agent Core (unchanged)
+Future extension point (not built yet):
+  ┌─────────────────┐
+  │  Gmail Adapter  │
+  │  Gmail polling  │
+  └────────┬────────┘
+           ▼
+     Agent Core (unchanged)
 ```
 
 ---
@@ -121,6 +129,8 @@ Two cache breakpoints allow Claude to cache instructions and knowledge separatel
 
 **Model:** `claude-haiku-4-5` for all queries in v1. No automatic Sonnet fallback — not warranted at 500 messages/month. If Haiku returns an escalation response, log it to Langfuse for review.
 
+**Multi-turn history:** `Message.history` is an optional list of prior `{role, content}` turns, prepended to the `messages` array before the current turn. It defaults to empty, so Messenger (which never sets it) is unaffected. The website widget uses it to give Claude context for follow-up questions within a browser session.
+
 ### 3.4 Messenger Adapter (`src/adapters/messenger.py`)
 
 Implements the Meta Messenger Webhooks protocol as a Flask blueprint.
@@ -132,29 +142,43 @@ The async-after-200 pattern is essential: Meta expects a response in under 20 se
 
 **Attachment handling:** Non-text events (stickers, images, voice notes) receive a canned reply: "Hi! I can only read text messages. If you have a question, just type it out and I'll do my best to help."
 
-### 3.5 Web Server (`src/server.py`)
+### 3.5 Website Widget Adapter (`src/adapters/widget.py`)
+
+Implements the embeddable website chat as a Flask blueprint.
+
+- `GET /widget` — serves the chat page (`src/templates/widget/index.html`, styled by `src/static/widget/`). Sets `Content-Security-Policy: frame-ancestors <WIDGET_FRAME_ANCESTORS>` so only approved sites (communityswimclub.com) can embed it in an `<iframe>`.
+- `POST /chat` — accepts `{ message, session_id, history }`, validates and bounds the input (message ≤1000 chars, history ≤6 turns), calls `agent.respond()` with `channel=WIDGET`, logs to `conversation_log`, traces to Langfuse, and returns `{ reply, escalated }`.
+
+**Identity:** `session_id` is a random UUID generated client-side and kept only in browser `sessionStorage` — never tied to any account. It is SHA-256-hashed before being used as `sender_id_hash` in the conversation log, mirroring the Messenger PSID-hash pattern.
+
+**Rate limiting:** `flask-limiter`, keyed by client IP (`Fly-Client-IP` header, falling back to `X-Forwarded-For`/`remote_addr`), limits `/chat` to `WIDGET_RATE_LIMIT_PER_MINUTE` and `WIDGET_RATE_LIMIT_PER_DAY` (defaults: 10/min, 150/day). In-memory storage is sufficient for the single Fly.io machine. Exceeding the limit returns HTTP 429 with a friendly JSON `reply` the widget displays inline.
+
+**Same-origin by design:** the iframe's `src` is the widget page itself, so the page's `fetch("/chat")` call is same-origin — no CORS configuration is needed. The `frame-ancestors` CSP header is the actual access control, preventing other sites from embedding the widget and running up API costs.
+
+### 3.6 Web Server (`src/server.py`)
 
 Thin Flask app. Mounts:
 - `GET/POST /webhook` → Messenger adapter
+- `GET /widget`, `POST /chat` → website widget adapter
+- `GET /privacy-policy` → serves `docs/privacy-policy.html`
 - `GET /health` → returns `{status: ok, knowledge_age_hours: N, knowledge_bytes: N}`
-- Phase 2: `POST /chat` → website widget adapter
 
 Flask is chosen over FastAPI. The webhook endpoint must return 200 synchronously then do work asynchronously. Flask with a background thread is simpler to reason about than FastAPI's async machinery for this single-endpoint use case.
 
-### 3.6 Scheduler (`src/scheduler.py`)
+### 3.7 Scheduler (`src/scheduler.py`)
 
 APScheduler `BackgroundScheduler` runs inside the server process and triggers the nightly crawl at 2am. On crawl completion, reloads the in-memory knowledge block so the running agent picks up fresh content without a restart. No separate cron job or cloud scheduler needed.
 
-### 3.7 SQLite Store (`data/message_log.db`)
+### 3.8 SQLite Store (`data/message_log.db`)
 
 Two tables:
 
 - `processed_messages(mid TEXT PRIMARY KEY, processed_at TIMESTAMP)` — idempotency. Check before processing; insert before spawning background task.
-- `conversation_log(id, channel, sender_id_hash, message_text, response_text, latency_ms, escalated BOOL, created_at)` — local log for Looker Studio. `sender_id_hash` is SHA-256 of the PSID; no raw PII stored.
+- `conversation_log(id, channel, sender_id_hash, message_text, response_text, latency_ms, escalated BOOL, created_at)` — local log for Looker Studio. `sender_id_hash` is SHA-256 of the PSID (Messenger) or session UUID (website); no raw PII stored.
 
 SQLite is sufficient at 500 messages/month. SQLAlchemy abstracts both SQLite and Postgres, so migration is trivial if traffic ever warrants it.
 
-### 3.8 Langfuse Integration (`src/observability.py`)
+### 3.9 Langfuse Integration (`src/observability.py`)
 
 Wraps every `agent.respond()` call in a Langfuse trace recording input/output tokens, model, latency, `escalated` flag, and `channel` tag. Online evals: Langfuse is configured to score ~20% of live traces using a Haiku-based judge prompt (accuracy, helpfulness, tone). Offline evals: `evals/run_evals.py` fetches the `csc-golden-set` dataset from Langfuse, runs the agent against each input, scores with the judge prompt, and asserts a minimum pass rate — invoked by GitHub Actions CI.
 
@@ -212,6 +236,7 @@ Wraps every `agent.respond()` call in a Langfuse trace recording input/output to
 | Prompt strategy | Prompt stuffing + cache_control | Eliminates vector DB; see Section 1 |
 | Crawler | requests + beautifulsoup4 + html2text | No JS rendering needed for a static club site |
 | Scheduling | APScheduler (in-process) | No separate infra; adequate for one nightly job |
+| Rate limiting | flask-limiter (in-memory) | Per-IP limits on `/chat`; sufficient for a single Fly.io machine |
 | Storage | SQLite via SQLAlchemy | Zero-ops; trivially upgradeable to Postgres |
 | Hosting | Fly.io (free tier) | Free single small VM; persistent volume for SQLite; built-in HTTPS |
 | LLM observability | Langfuse cloud (free tier) | Purpose-built for LLM tracing; covers online evals, offline datasets, cost tracking |
@@ -255,8 +280,15 @@ csc-agent/
 │   │
 │   ├── adapters/
 │   │   ├── messenger.py        # Flask blueprint; GET+POST /webhook
-│   │   ├── widget.py           # STUB: Phase 2 website widget (POST /chat)
+│   │   ├── widget.py           # Flask blueprint; GET /widget, POST /chat, rate limiting
 │   │   └── gmail.py            # STUB: Phase 2 Gmail polling adapter
+│   │
+│   ├── templates/widget/
+│   │   └── index.html          # Chat widget page (Jinja)
+│   │
+│   ├── static/widget/
+│   │   ├── style.css           # Chat widget styling
+│   │   └── chat.js             # Chat widget client logic
 │   │
 │   ├── crawler/
 │   │   ├── crawler.py          # HTTP crawler; follows internal links
@@ -371,18 +403,16 @@ At 10× traffic (5,000 messages/month), total cost remains under $15/month.
 
 ---
 
-## 9. Phase 2 Extension Points
+## 9. Future Extension Points
 
-### Website Widget Adapter
+### Website Widget Adapter — Implemented
 
-Add `src/adapters/widget.py` as a Flask blueprint exposing `POST /chat`:
+See [3.5](#35-website-widget-adapter-srcadapterswidgetpy). `POST /chat` request/response shape:
 
 ```json
-Request:  { "message": "...", "session_id": "..." }
-Response: { "reply": "..." }
+Request:  { "message": "...", "session_id": "...", "history": [{"role": "user", "content": "..."}, ...] }
+Response: { "reply": "...", "escalated": false }
 ```
-
-Register it in `server.py`. The widget is a small JavaScript snippet on `communityswimclub.com` that calls this endpoint. Zero changes to `agent.py`. Add `flask-cors` restricted to `communityswimclub.com` and `flask-limiter` at 20 requests/minute per IP.
 
 ### Gmail Adapter
 

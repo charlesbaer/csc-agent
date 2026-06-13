@@ -2,10 +2,11 @@ import json
 import logging
 from pathlib import Path
 
-from flask import Flask
+from flask import Flask, send_file
 
 from src.adapters.data_deletion import data_deletion_bp
 from src.adapters.messenger import messenger_bp
+from src.adapters.widget import limiter, widget_bp
 from src.agent import agent as agent_module
 from src.config import get_config
 from src.db import init_db
@@ -14,6 +15,7 @@ from src.scheduler import shutdown, start
 logger = logging.getLogger(__name__)
 
 _META_FILE = Path(__file__).parent.parent / "data" / "knowledge_meta.json"
+_PRIVACY_POLICY_FILE = Path(__file__).parent.parent / "docs" / "privacy-policy.html"
 
 
 def create_app() -> Flask:
@@ -23,6 +25,8 @@ def create_app() -> Flask:
     app = Flask(__name__)
     app.register_blueprint(messenger_bp)
     app.register_blueprint(data_deletion_bp)
+    app.register_blueprint(widget_bp)
+    limiter.init_app(app)
 
     init_db()
     agent_module.load_knowledge()
@@ -38,5 +42,9 @@ def create_app() -> Flask:
         if _META_FILE.exists():
             meta = json.loads(_META_FILE.read_text())
         return {"status": "ok", **meta}, 200
+
+    @app.get("/privacy-policy")
+    def privacy_policy():
+        return send_file(_PRIVACY_POLICY_FILE)
 
     return app

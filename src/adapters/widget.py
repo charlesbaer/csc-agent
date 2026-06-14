@@ -42,6 +42,11 @@ def _chat_rate_limit() -> str:
     return f"{cfg.widget_rate_limit_per_minute} per minute;{cfg.widget_rate_limit_per_day} per day"
 
 
+def _page_rate_limit() -> str:
+    cfg = get_config()
+    return f"{cfg.widget_page_rate_limit_per_minute} per minute"
+
+
 def _clean_history(raw: object) -> list[dict[str, str]]:
     if not isinstance(raw, list):
         return []
@@ -68,6 +73,7 @@ def _rate_limited(_exc):
 
 
 @widget_bp.get("/widget")
+@limiter.limit(_page_rate_limit)
 def widget_page():
     cfg = get_config()
     resp = make_response(

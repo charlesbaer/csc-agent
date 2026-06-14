@@ -32,6 +32,7 @@ class Config:
     # Website chat widget
     widget_rate_limit_per_minute: int
     widget_rate_limit_per_day: int
+    widget_page_rate_limit_per_minute: int
     widget_frame_ancestors: str
     privacy_policy_url: str
 
@@ -68,6 +69,9 @@ def get_config() -> Config:
         crawl_schedule_minute=int(os.getenv("CRAWL_SCHEDULE_MINUTE", "0")),
         widget_rate_limit_per_minute=int(os.getenv("WIDGET_RATE_LIMIT_PER_MINUTE", "10")),
         widget_rate_limit_per_day=int(os.getenv("WIDGET_RATE_LIMIT_PER_DAY", "150")),
+        widget_page_rate_limit_per_minute=int(
+            os.getenv("WIDGET_PAGE_RATE_LIMIT_PER_MINUTE", "30")
+        ),
         widget_frame_ancestors=os.getenv(
             "WIDGET_FRAME_ANCESTORS",
             "https://communityswimclub.com https://www.communityswimclub.com",

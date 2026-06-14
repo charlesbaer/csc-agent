@@ -24,7 +24,7 @@ The widget is a self-contained page served at `/widget`, embedded via an `<ifram
 </iframe>
 ```
 
-Because the iframe content and the `/chat` API share the same origin, no CORS configuration is needed. Embedding is restricted to the origins listed in `WIDGET_FRAME_ANCESTORS` via a `Content-Security-Policy: frame-ancestors` header, and `/chat` is rate-limited per IP (`WIDGET_RATE_LIMIT_PER_MINUTE` / `WIDGET_RATE_LIMIT_PER_DAY`) to protect against bots driving up API costs.
+Because the iframe content and the `/chat` API share the same origin, no CORS configuration is needed. Embedding is restricted to the origins listed in `WIDGET_FRAME_ANCESTORS` via a `Content-Security-Policy: frame-ancestors` header, `/chat` is rate-limited per IP (`WIDGET_RATE_LIMIT_PER_MINUTE` / `WIDGET_RATE_LIMIT_PER_DAY`) to protect against bots driving up API costs, and `/widget` itself is rate-limited per IP (`WIDGET_PAGE_RATE_LIMIT_PER_MINUTE`) to blunt scripted floods of the page.
 
 ## Local development
 
@@ -71,6 +71,7 @@ ngrok http 5000
 | `ANTHROPIC_MODEL` | No | Model override (default: `claude-haiku-4-5`) |
 | `WIDGET_RATE_LIMIT_PER_MINUTE` | No | Per-IP limit on `/chat` (default: `10`) |
 | `WIDGET_RATE_LIMIT_PER_DAY` | No | Per-IP daily limit on `/chat` (default: `150`) |
+| `WIDGET_PAGE_RATE_LIMIT_PER_MINUTE` | No | Per-IP limit on `GET /widget` (default: `30`) |
 | `WIDGET_FRAME_ANCESTORS` | No | Space-separated origins allowed to embed `/widget` in an iframe |
 | `PRIVACY_POLICY_URL` | No | Link shown in the widget footer (default: `/privacy-policy`) |
 | `LOG_LEVEL` | No | Logging level (default: `INFO`) |

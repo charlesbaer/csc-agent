@@ -151,7 +151,7 @@ Implements the embeddable website chat as a Flask blueprint.
 
 **Identity:** `session_id` is a random UUID generated client-side and kept only in browser `sessionStorage` — never tied to any account. It is SHA-256-hashed before being used as `sender_id_hash` in the conversation log, mirroring the Messenger PSID-hash pattern.
 
-**Rate limiting:** `flask-limiter`, keyed by client IP (`Fly-Client-IP` header, falling back to `X-Forwarded-For`/`remote_addr`), limits `/chat` to `WIDGET_RATE_LIMIT_PER_MINUTE` and `WIDGET_RATE_LIMIT_PER_DAY` (defaults: 10/min, 150/day). In-memory storage is sufficient for the single Fly.io machine. Exceeding the limit returns HTTP 429 with a friendly JSON `reply` the widget displays inline.
+**Rate limiting:** `flask-limiter`, keyed by client IP (`Fly-Client-IP` header, falling back to `X-Forwarded-For`/`remote_addr`), limits `/chat` to `WIDGET_RATE_LIMIT_PER_MINUTE` and `WIDGET_RATE_LIMIT_PER_DAY` (defaults: 10/min, 150/day), and limits `GET /widget` to `WIDGET_PAGE_RATE_LIMIT_PER_MINUTE` (default: 30/min) to blunt scripted floods of the page itself. In-memory storage is sufficient for the single Fly.io machine. Exceeding either limit returns HTTP 429 with a friendly JSON `reply` the widget displays inline.
 
 **Same-origin by design:** the iframe's `src` is the widget page itself, so the page's `fetch("/chat")` call is same-origin — no CORS configuration is needed. The `frame-ancestors` CSP header is the actual access control, preventing other sites from embedding the widget and running up API costs.
 

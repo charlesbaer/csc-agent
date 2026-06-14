@@ -99,7 +99,7 @@ Nightly at 2am, fetches all public pages from `communityswimclub.com` via a recu
 
 ### 3.2 Knowledge Builder (`src/crawler/knowledge_builder.py`)
 
-Takes raw crawled content, normalizes it (deduplicates near-identical sections, enforces source priority — website beats Facebook), and merges in any manually curated content from `data/overrides/`. Writes the final `data/knowledge.md` and `data/knowledge_meta.json` (crawl timestamp, source URLs, byte count).
+Takes raw crawled content, normalizes it (deduplicates near-identical sections, enforces source priority — website beats Facebook), and merges in any manually curated content from `overrides/`. Writes the final `data/knowledge.md` and `data/knowledge_meta.json` (crawl timestamp, source URLs, byte count).
 
 ### 3.3 Agent Core (`src/agent/`)
 
@@ -252,11 +252,13 @@ csc-agent/
 ├── ARCHITECTURE.md
 │
 ├── data/
-│   ├── knowledge.md            # built nightly by crawler (committed for audit trail)
-│   ├── knowledge_meta.json     # crawl timestamp, source URLs, byte count
-│   ├── overrides/
-│   │   └── board_contacts.md   # manually curated; always authoritative
+│   ├── knowledge.md            # built nightly by crawler (gitignored; on Fly persistent volume)
+│   ├── knowledge_meta.json     # crawl timestamp, source URLs, byte count (gitignored)
 │   └── message_log.db          # SQLite (gitignored; on Fly persistent volume)
+│
+├── overrides/
+│   ├── board.md                # manually curated board contacts; always authoritative
+│   └── social.md                # manually curated social calendar; always authoritative
 │
 ├── src/
 │   ├── config.py               # all config read from env vars; typed dataclass

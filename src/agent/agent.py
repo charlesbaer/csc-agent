@@ -15,6 +15,9 @@ _KNOWLEDGE_FILE = Path(__file__).parent.parent.parent / "data" / "knowledge.md"
 # Loaded once at startup and refreshed by the nightly scheduler
 _knowledge_block: str = ""
 
+# Shared client, reused across requests for connection pooling
+_client = anthropic.Anthropic(api_key=get_config().anthropic_api_key)
+
 
 def load_knowledge() -> None:
     """Load (or reload) the knowledge base from disk into memory."""
@@ -30,7 +33,6 @@ def load_knowledge() -> None:
 def respond(message: Message) -> Response:
     """Core entry point: given a member message, return a response."""
     cfg = get_config()
-    client = anthropic.Anthropic(api_key=cfg.anthropic_api_key)
 
     knowledge = _knowledge_block or "(Knowledge base not loaded.)"
 
@@ -46,7 +48,7 @@ def respond(message: Message) -> Response:
         }
     )
 
-    result = client.messages.create(
+    result = _client.messages.create(
         model=cfg.anthropic_model,
         max_tokens=512,
         system=[

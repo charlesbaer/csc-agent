@@ -58,6 +58,17 @@ def crawl_website() -> str:
         for tag in soup.select("script, style, nav, footer, header"):
             tag.decompose()
 
+        # Remove the calendar month-picker dropdown (24+ months of options,
+        # pure navigation chrome with no informational value)
+        for tag in soup.select("select#CalendarPicker"):
+            tag.decompose()
+
+        # Remove the site-wide footer block (member links, shop, contact,
+        # app links, PoolDues branding) — identical on every page
+        for tag in soup.select("div.pd_container.pd_pad5"):
+            if tag.get_text(strip=True).startswith("MEMBER LINKS"):
+                tag.decompose()
+
         markdown = _CONVERTER.handle(str(soup))
         if markdown.strip():
             pages.append(f"<!-- Source: {url} -->\n\n{markdown.strip()}")

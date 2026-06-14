@@ -1,7 +1,7 @@
 import hashlib
 import hmac
 import logging
-import threading
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 
 import requests as http_requests
@@ -21,6 +21,10 @@ _NON_TEXT_REPLY = (
     "Hi! I can only read text messages. "
     "If you have a question, just type it out and I'll do my best to help."
 )
+
+# Bounds concurrent background work so a burst of webhook deliveries can't
+# spawn unbounded threads
+_executor = ThreadPoolExecutor(max_workers=8, thread_name_prefix="messenger")
 
 
 def _verify_signature(payload: bytes, signature_header: str) -> bool:
@@ -157,15 +161,9 @@ def receive():
                 session.add(ProcessedMessage(mid=mid, processed_at=datetime.now(timezone.utc)))
 
             if not message_text:
-                threading.Thread(
-                    target=_send_message, args=(sender_psid, _NON_TEXT_REPLY), daemon=True
-                ).start()
+                _executor.submit(_send_message, sender_psid, _NON_TEXT_REPLY)
                 continue
 
-            threading.Thread(
-                target=_handle_message_async,
-                args=(sender_psid, message_text),
-                daemon=True,
-            ).start()
+            _executor.submit(_handle_message_async, sender_psid, message_text)
 
     return "OK", 200

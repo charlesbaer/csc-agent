@@ -6,7 +6,6 @@ from typing import Any
 class Channel(str, Enum):
     MESSENGER = "messenger"
     WIDGET = "widget"
-    GMAIL = "gmail"
 
 
 @dataclass

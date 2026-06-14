@@ -67,14 +67,14 @@ The one real risk is staleness: cached prompt blocks have a TTL of ~1 hour, so r
 │  └──────────────────────────────────────────────────────────────────────┘   │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
-         │                               │
-         │ traces + scores               │ nightly export
-         ▼                               ▼
-  ┌─────────────┐              ┌──────────────────────┐
-  │  Langfuse   │─────────────►│  Google Looker Studio │
-  │  (cloud,    │              │  (admin dashboard)   │
-  │  free tier) │              └──────────────────────┘
-  └─────────────┘
+         │
+         │ traces + scores
+         ▼
+  ┌─────────────┐
+  │  Langfuse   │
+  │  (cloud,    │
+  │  free tier) │
+  └──────┬──────┘
          │
          │ CI eval runs
          ▼
@@ -82,15 +82,6 @@ The one real risk is staleness: cached prompt blocks have a TTL of ~1 hour, so r
   │  GitHub Actions     │
   │  eval workflow      │
   └─────────────────────┘
-
-
-Future extension point (not built yet):
-  ┌─────────────────┐
-  │  Gmail Adapter  │
-  │  Gmail polling  │
-  └────────┬────────┘
-           ▼
-     Agent Core (unchanged)
 ```
 
 ---
@@ -174,7 +165,7 @@ APScheduler `BackgroundScheduler` runs inside the server process and triggers th
 Two tables:
 
 - `processed_messages(mid TEXT PRIMARY KEY, processed_at TIMESTAMP)` — idempotency. Check before processing; insert before spawning background task.
-- `conversation_log(id, channel, sender_id_hash, message_text, response_text, latency_ms, escalated BOOL, created_at)` — local log for Looker Studio. `sender_id_hash` is SHA-256 of the PSID (Messenger) or session UUID (website); no raw PII stored.
+- `conversation_log(id, channel, sender_id_hash, message_text, response_text, latency_ms, escalated BOOL, created_at)` — local conversation log for admin review. `sender_id_hash` is SHA-256 of the PSID (Messenger) or session UUID (website); no raw PII stored.
 
 SQLite is sufficient at 500 messages/month. SQLAlchemy abstracts both SQLite and Postgres, so migration is trivial if traffic ever warrants it.
 
@@ -240,7 +231,6 @@ Wraps every `agent.respond()` call in a Langfuse trace recording input/output to
 | Storage | SQLite via SQLAlchemy | Zero-ops; trivially upgradeable to Postgres |
 | Hosting | Fly.io (free tier) | Free single small VM; persistent volume for SQLite; built-in HTTPS |
 | LLM observability | Langfuse cloud (free tier) | Purpose-built for LLM tracing; covers online evals, offline datasets, cost tracking |
-| Admin dashboard | Google Looker Studio | Free; zero-code for admins |
 | CI | GitHub Actions | Free; used for offline eval gating |
 | Secrets | Fly.io secrets | Encrypted at rest; injected as env vars |
 | Tunnel (local dev) | ngrok | Industry standard for webhook development; free tier sufficient |
@@ -280,8 +270,7 @@ csc-agent/
 │   │
 │   ├── adapters/
 │   │   ├── messenger.py        # Flask blueprint; GET+POST /webhook
-│   │   ├── widget.py           # Flask blueprint; GET /widget, POST /chat, rate limiting
-│   │   └── gmail.py            # STUB: Phase 2 Gmail polling adapter
+│   │   └── widget.py           # Flask blueprint; GET /widget, POST /chat, rate limiting
 │   │
 │   ├── templates/widget/
 │   │   └── index.html          # Chat widget page (Jinja)
@@ -376,6 +365,11 @@ LANGFUSE_SECRET_KEY=
 LANGFUSE_HOST=https://cloud.langfuse.com
 CRAWL_SCHEDULE_HOUR=2
 CRAWL_SCHEDULE_MINUTE=0
+WIDGET_RATE_LIMIT_PER_MINUTE=10
+WIDGET_RATE_LIMIT_PER_DAY=150
+WIDGET_PAGE_RATE_LIMIT_PER_MINUTE=30
+WIDGET_FRAME_ANCESTORS=https://communityswimclub.com https://www.communityswimclub.com
+PRIVACY_POLICY_URL=/privacy-policy
 LOG_LEVEL=INFO
 ```
 
@@ -414,20 +408,6 @@ Request:  { "message": "...", "session_id": "...", "history": [{"role": "user", 
 Response: { "reply": "...", "escalated": false }
 ```
 
-### Gmail Adapter
-
-Add `src/adapters/gmail.py`. Use APScheduler to poll the inbox every 5 minutes via the Gmail API. Mark processed messages with a `bot-replied` label to prevent double-replies. The agent call is identical to Messenger:
-
-```python
-response = agent.respond(Message(
-    text=email_body_text,
-    channel=Channel.GMAIL,
-    metadata={"subject": subject, "from": sender}
-))
-```
-
-A thin formatting layer in the Gmail adapter adds an appropriate email greeting and signature before sending the reply.
-
 ### Adding a New Knowledge Source
 
 If the club adds a Google Doc or PDF FAQ, add a new fetcher in `src/crawler/` that outputs markdown, then merge it in `knowledge_builder.py`. The agent sees it automatically on the next crawl with no other changes.
@@ -446,4 +426,4 @@ Build in this order — each step is independently testable before the next begi
 6. `src/scheduler.py` — add nightly crawl schedule
 7. `src/observability.py` — wrap agent calls with Langfuse tracing
 8. Fly.io deploy — production
-9. Looker Studio dashboard — connect to exported conversation log
+9. `src/adapters/widget.py` + `src/templates/widget/` + `src/static/widget/` — embeddable website chat, rate-limited per IP

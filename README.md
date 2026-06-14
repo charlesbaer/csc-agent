@@ -139,6 +139,7 @@ evals/
   run_evals.py    # CI eval runner
 docs/
   privacy-policy.html  # Served at /privacy-policy; also used for Meta App Review
+  data-processing.md   # Third-party services & their data processing terms
 ```
 
 ## Architecture
